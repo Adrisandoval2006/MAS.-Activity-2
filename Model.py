@@ -11,6 +11,7 @@ Date: 2026-11-21
 import mesa
 from mesa.space import MultiGrid
 from Agent import RobotAgent
+from Coordination import buildCoordinationGraph, maxPlus
 
 
 class CleaningModel(mesa.Model):
@@ -41,6 +42,7 @@ class CleaningModel(mesa.Model):
         self.currentStep = 0
         self.totalMoves = 0
         self.completionTime = None
+        self.selectedActions = {}
 
         self.grid = MultiGrid(width, height, torus=False)
 
@@ -79,7 +81,21 @@ class CleaningModel(mesa.Model):
     # Returns: None.
     def step(self):
         if self.running:
+
+            # Creates the coordination graph.
+            graph = buildCoordinationGraph(self.agents)
+
+            # Calculates the best action for each robot.
+            self.selectedActions = maxPlus(
+                self.agents,
+                graph,
+                self,
+                iterations=10
+            )
+
+            # Activates every robot using its selected action.
             self.agents.shuffle_do("step")
+
             self.currentStep += 1
 
             if not self.dirtyCells:
