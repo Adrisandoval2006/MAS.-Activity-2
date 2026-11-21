@@ -1,11 +1,11 @@
 """
-Simulation model for reactive cleaning robots.
+Simulation model for coordinated cleaning robots.
 Authors: Adriana Sandoval Santos - A01667445
          Marbella Barba De los Santos - A01660946
          Javier Padilla Marcial - A01660945
          Camila Quintanilla Cabrera - A01662397
          Alani Daniel Garcia Maya - A01277308
-Date: 2026-11-06
+Date: 2026-11-21
 """
 
 import mesa
@@ -15,39 +15,36 @@ from Agent import RobotAgent
 
 class CleaningModel(mesa.Model):
     # Creates a room, dirty cells, and robots for one simulation.
-    # Parameters: dirtyPercentage: Percentage of initially dirty cells.
+    # Parameters: numAgents: Number of robots.
     # maxSteps: Maximum number of simulation steps.
-    # numAgents: Number of robots.
     # width: Number of columns; height: Number of rows.
     # seed: Optional random seed for reproducibility.
     # Returns: None.
-    def __init__(self, dirtyPercentage, maxSteps, numAgents=7,
-                 width=10, height=10, seed=None):
+    def __init__(self, numAgents=1, maxSteps=500,
+                 width=30, height=20, seed=None):
         super().__init__(seed=seed)
 
-        if not 0 <= dirtyPercentage <= 100:
-            raise ValueError("Dirty percentage must be between 0 and 100")
-        if width <= 0 or height <= 0:
-            raise ValueError("Room dimensions must be positive")
-        if numAgents <= 0:
-            raise ValueError("Number of agents must be positive")
-        if maxSteps < 0:
-            raise ValueError("Maximum steps cannot be negative")
+        if numAgents not in [1, 2, 4, 8, 16]:
+            raise ValueError("Number of agents must be 1, 2, 4, 8, or 16")
 
-        self.dirtyPercentage = dirtyPercentage
-        self.maxSteps = maxSteps
+        if width != 30 or height != 20:
+            raise ValueError("Room size must be 20x30")
+
+        if maxSteps != 500:
+            raise ValueError("Maximum steps must be 500")
+
         self.numAgents = numAgents
+        self.maxSteps = maxSteps
         self.width = width
         self.height = height
+
         self.currentStep = 0
         self.totalMoves = 0
         self.completionTime = None
 
         self.grid = MultiGrid(width, height, torus=False)
 
-        totalCells = width * height
-        numDirtyCells = int(totalCells * dirtyPercentage / 100)
-
+        # Randomly selects 100 different dirty cells.
         allCells = [
             (x, y)
             for x in range(width)
@@ -55,18 +52,27 @@ class CleaningModel(mesa.Model):
         ]
 
         self.dirtyCells = set(
-            self.random.sample(allCells, numDirtyCells)
+            self.random.sample(allCells, 100)
         )
-        self.initialDirtyCells = numDirtyCells
 
-        for _ in range(numAgents):
+        self.initialDirtyCells = len(self.dirtyCells)
+
+        # Selects random starting positions from clean cells.
+        cleanCells = [
+            cell for cell in allCells
+            if cell not in self.dirtyCells
+        ]
+
+        startingPositions = self.random.sample(
+            cleanCells, numAgents
+        )
+
+        # Creates robots at their selected starting positions.
+        for position in startingPositions:
             agent = RobotAgent(self)
-            self.grid.place_agent(agent, (0, 0))
+            self.grid.place_agent(agent, position)
 
-        self.running = bool(self.dirtyCells) and maxSteps > 0
-
-        if not self.dirtyCells:
-            self.completionTime = 0
+        self.running = True
 
     # Activates every robot once and updates simulation time.
     # Parameters: None.
@@ -79,22 +85,26 @@ class CleaningModel(mesa.Model):
             if not self.dirtyCells:
                 self.completionTime = self.currentStep
                 self.running = False
+
             elif self.currentStep >= self.maxSteps:
                 self.running = False
 
-    # Calculates the percentage of cells that are clean.
+    # Calculates the percentage of initially dirty cells cleaned.
     # Parameters: None.
-    # Returns: Float representing the clean percentage.
+    # Returns: Float representing the cleaned percentage.
     def cleanPercentage(self):
-        totalCells = self.width * self.height
-        return 100 * (totalCells - len(self.dirtyCells)) / totalCells
+        cleanedCells = (
+            self.initialDirtyCells - len(self.dirtyCells)
+        )
+
+        return 100 * cleanedCells / self.initialDirtyCells
 
     # Returns the per-robot counters for the current simulation.
     # Parameters: None.
     # Returns: List of dictionaries with each robot's statistics.
     def getAgentStats(self):
         agentStats = []
-        
+
         for agent in self.agents:
             agentStats.append({
                 "agentId": agent.unique_id,
@@ -102,7 +112,7 @@ class CleaningModel(mesa.Model):
                 "movements": agent.movements,
                 "cellsCleaned": agent.cellsCleaned
             })
-            
+
         return agentStats
 
     # Returns overall statistics for the current simulation.
