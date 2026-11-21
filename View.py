@@ -1,11 +1,11 @@
 """
-Runs multiple cleaning robot experiments and saves results.
+Visualizes the coordinated cleaning robot simulation.
 Authors: Adriana Sandoval Santos - A01667445
          Marbella Barba De los Santos - A01660946
          Javier Padilla Marcial - A01660945
          Camila Quintanilla Cabrera - A01662397
          Alani Daniel Garcia Maya - A01277308
-Date: 2026-11-13
+Date: 2026-11-21
 """
 
 import matplotlib.pyplot as plt
@@ -13,11 +13,10 @@ from matplotlib.colors import ListedColormap
 from matplotlib.widgets import Button
 from Model import CleaningModel
 
-ROOM_WIDTH = 10
-ROOM_HEIGHT = 10
-DIRTY_PERCENTAGE = 30
-MAX_STEPS = 100
-NUM_AGENTS = 1
+ROOM_WIDTH = 30
+ROOM_HEIGHT = 20
+MAX_STEPS = 500
+NUM_AGENTS = 4
 STEP_DELAY = 0.15
 
 
@@ -82,14 +81,13 @@ def drawRoom(axes, model):
 # Returns: None.
 def main():
     model = CleaningModel(
-        dirtyPercentage=DIRTY_PERCENTAGE,
         maxSteps=MAX_STEPS,
         numAgents=NUM_AGENTS,
         width=ROOM_WIDTH,
         height=ROOM_HEIGHT
     )
 
-    figure, axes = plt.subplots(figsize=(9, 6))
+    figure, axes = plt.subplots(figsize=(12, 7))
     plt.subplots_adjust(bottom=0.16)
 
     buttonAxes = figure.add_axes(
