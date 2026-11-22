@@ -13,25 +13,47 @@ import time
 from Model import CleaningModel
 
 TESTS = [
-    {"name": "1 agent", "numAgents": 1,
+    # tests with maxplus
+    {"name": "max plus 1 agent", "method": "maxplus", "numAgents": 1,
      "width": 30, "height": 20,
-     "maxSteps": 500, "repetitions": 2},
+     "maxSteps": 500, "repetitions": 100},
 
-    {"name": "2 agents", "numAgents": 2,
+    {"name": "max plus 2 agents", "method": "maxplus", "numAgents": 2,
      "width": 30, "height": 20,
-     "maxSteps": 500, "repetitions": 2},
+     "maxSteps": 500, "repetitions": 100},
 
-    {"name": "4 agents", "numAgents": 4,
+    {"name": "max plus 4 agents", "method": "maxplus", "numAgents": 4,
      "width": 30, "height": 20,
-     "maxSteps": 500, "repetitions": 2},
+     "maxSteps": 500, "repetitions": 100},
 
-    {"name": "8 agents", "numAgents": 8,
+    {"name": "max plus 8 agents", "method": "maxplus", "numAgents": 8,
      "width": 30, "height": 20,
-     "maxSteps": 500, "repetitions": 2},
+     "maxSteps": 500, "repetitions": 100},
 
-    {"name": "16 agents", "numAgents": 16,
+    {"name": "max plus 16 agents", "method": "maxplus", "numAgents": 16,
      "width": 30, "height": 20,
-     "maxSteps": 500, "repetitions": 2},
+     "maxSteps": 500, "repetitions": 100},
+
+    # tests with random
+    {"name": "random 1 agent", "method": "random", "numAgents": 1,
+     "width": 30, "height": 20,
+     "maxSteps": 500, "repetitions": 100},
+
+    {"name": "random 2 agents", "method": "random", "numAgents": 2,
+     "width": 30, "height": 20,
+     "maxSteps": 500, "repetitions": 100},
+
+    {"name": "random 4 agents", "method": "random", "numAgents": 4,
+     "width": 30, "height": 20,
+     "maxSteps": 500, "repetitions": 100},
+
+    {"name": "random 8 agents", "method": "random", "numAgents": 8,
+     "width": 30, "height": 20,
+     "maxSteps": 500, "repetitions": 100},
+
+    {"name": "random 16 agents", "method": "random", "numAgents": 16,
+     "width": 30, "height": 20,
+     "maxSteps": 500, "repetitions": 100},
 ]
 
 OUTPUT_FILE = "test_results.csv"
@@ -61,6 +83,8 @@ def runTest(test, run, seed):
         numAgents=test["numAgents"],
         width=test["width"],
         height=test["height"],
+        nDirty=100,
+        agentType=test["method"],
         seed=seed,
     )
 
@@ -144,5 +168,4 @@ def main():
     saveCsv(agentRows, AGENT_OUTPUT_FILE, AGENT_COLUMNS)
 
 
-if __name__ == "__main__":
-    main()
+main()
