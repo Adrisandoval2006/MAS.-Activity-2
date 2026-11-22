@@ -31,29 +31,29 @@ def buildCoordinationGraph(agents):
 
     return graph
 
+def manhattan(position, destCell):
+    return abs(position[0] - destCell[0]) + abs(position[1] - destCell[1])
+
+def goToward(agent, target, model):
+    getMyNeighbors = model.grid.get_neighborhood(agent.pos, moore=False, include_center = False)
+    bestDistance = min(manhattan(cell, target) for cell in getMyNeighbors)
+    best = [cell for cell in getMyNeighbors if manhattan(cell, target) == bestDistance]
+    return model.random.choice(sorted(best))
 
 def getPossibleActions(agent, model):
-    x, y = agent.pos
-    allCells = [
-        (i, j)
-        for i in range(model.width)
-        for j in range(model.height)
-    ]
-
     actions = []
-
-    # Action a: move to the nearest dirty cell
+    getMyNeighbors = model.grid.get_neighborhood(agent.pos, moore=False, include_center = False)
+    
+    dirtyStep = None
     if model.dirtyCells:
         dirtyTarget = min(
             model.dirtyCells,
-            key=lambda cell: (
-                abs(x - cell[0]) + abs(y - cell[1]),
-                cell
+            key=lambda cell: (manhattan(agent.pos, cell), cell)
             )
-        )
+        dirtyStep = goToward(agent, dirtyTarget, model)
         actions.append({
             "type": "a",
-            "destination": dirtyTarget
+            "destination": dirtyStep
         })
 
     # Action b: stay in the current cell
@@ -64,23 +64,14 @@ def getPossibleActions(agent, model):
 
     # Action c: move to the nearest clean cell
     cleanCells = [
-        cell for cell in allCells
-        if cell not in model.dirtyCells and cell != agent.pos
+        cell for cell in getMyNeighbors
+        if cell not in model.dirtyCells and cell != dirtyStep
     ]
 
     if cleanCells:
-
-        cleanTarget = min(
-            cleanCells,
-            key=lambda cell: (
-                abs(x - cell[0]) + abs(y - cell[1]),
-                cell
-            )
-        )
-
         actions.append({
             "type": "c",
-            "destination": cleanTarget
+            "destination": model.random.choice(sorted(cleanCells))
         })
 
     return actions
@@ -107,8 +98,8 @@ def calculateNeighborPayoff(action1, action2):
 
     return W
 
-def maxPlus(agents, graph, model, iterations=10):
 
+def maxPlus(agents, graph, model, iterations=50, tolerance=0.0001):
     actions = {}
 
     for agent in agents:
@@ -118,61 +109,58 @@ def maxPlus(agents, graph, model, iterations=10):
 
     for robot in graph:
         for neighbor in graph[robot]:
+
             messages[(robot, neighbor)] = [
-                0 for _ in actions[neighbor]
+                0.0 for _ in actions[neighbor]
             ]
 
-    for _ in range(iterations):
-
+    for iteration in range(iterations):
         newMessages = {}
 
         for robot in graph:
-
             for neighbor in graph[robot]:
-
                 message = []
 
                 for neighborAction in actions[neighbor]:
-
                     bestValue = float("-inf")
-
-                    for i in range(len(actions[robot])):
-
-                        robotAction = actions[robot][i]
-
+                    for i, robotAction in enumerate(actions[robot]):
                         value = calculateLocalUtility(robotAction)
 
                         for otherRobot in graph[robot]:
-
                             if otherRobot != neighbor:
                                 value += messages[(otherRobot, robot)][i]
 
-                        value += calculateNeighborPayoff(
-                            robotAction,
-                            neighborAction
-                        )
+                        value += calculateNeighborPayoff(robotAction,neighborAction)
 
-                        if value > bestValue:
-                            bestValue = value
+                        bestValue = max(bestValue, value)
 
                     message.append(bestValue)
 
-                newMessages[(robot, neighbor)] = message
+                maxValue = max(message)
+                normalizedMessage = [value - maxValue for value in message]
+
+                newMessages[(robot, neighbor)] = normalizedMessage
+
+        maxDifference = 0.0
+
+        for key in messages:
+            for oldValue, newValue in zip(messages[key], newMessages[key]):
+                difference = abs(newValue - oldValue)
+
+                maxDifference = max(maxDifference, difference)
 
         messages = newMessages
 
-    # Select the best action for each robot
-    selectedActions = {}
+        if maxDifference < tolerance:
+            break
+
+    theSelectedActions = {}
 
     for robot in graph:
-
         bestValue = float("-inf")
         bestAction = actions[robot][0]
 
-        for i in range(len(actions[robot])):
-
-            action = actions[robot][i]
-
+        for i, action in enumerate(actions[robot]):
             value = calculateLocalUtility(action)
 
             for neighbor in graph[robot]:
@@ -182,6 +170,6 @@ def maxPlus(agents, graph, model, iterations=10):
                 bestValue = value
                 bestAction = action
 
-        selectedActions[robot] = bestAction
+        theSelectedActions[robot] = bestAction
 
-    return selectedActions
+    return theSelectedActions

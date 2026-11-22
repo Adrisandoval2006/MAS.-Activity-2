@@ -10,7 +10,7 @@ Date: 2026-11-21
 
 import mesa
 from mesa.space import MultiGrid
-from Agent import RobotAgent
+from Agent import RobotAgent, RandomRobotAgent
 from Coordination import buildCoordinationGraph, maxPlus
 
 
@@ -22,7 +22,7 @@ class CleaningModel(mesa.Model):
     # seed: Optional random seed for reproducibility.
     # Returns: None.
     def __init__(self, numAgents=1, maxSteps=500,
-                 width=30, height=20, seed=None):
+                 width=30, height=20, nDirty = 100, agentType= "maxplus", seed=None):
         super().__init__(seed=seed)
 
         if numAgents not in [1, 2, 4, 8, 16]:
@@ -38,6 +38,7 @@ class CleaningModel(mesa.Model):
         self.maxSteps = maxSteps
         self.width = width
         self.height = height
+        self.agentType = agentType
 
         self.currentStep = 0
         self.totalMoves = 0
@@ -54,7 +55,7 @@ class CleaningModel(mesa.Model):
         ]
 
         self.dirtyCells = set(
-            self.random.sample(allCells, 100)
+            self.random.sample(allCells, nDirty)
         )
 
         self.initialDirtyCells = len(self.dirtyCells)
@@ -70,8 +71,9 @@ class CleaningModel(mesa.Model):
         )
 
         # Creates robots at their selected starting positions.
+        agentC = RobotAgent if agentType == "maxplus" else RandomRobotAgent
         for position in startingPositions:
-            agent = RobotAgent(self)
+            agent = agentC(self)
             self.grid.place_agent(agent, position)
 
         self.running = True
@@ -81,17 +83,11 @@ class CleaningModel(mesa.Model):
     # Returns: None.
     def step(self):
         if self.running:
-
-            # Creates the coordination graph.
-            graph = buildCoordinationGraph(self.agents)
-
-            # Calculates the best action for each robot.
-            self.selectedActions = maxPlus(
-                self.agents,
-                graph,
-                self,
-                iterations=10
-            )
+            if self.agentType == "maxplus":
+                # Creates the coordination graph.
+                graph = buildCoordinationGraph(list(self.agents))
+                # Calculates the best action for each robot.
+                self.selectedActions = maxPlus(list(self.agents), graph, self)
 
             # Activates every robot using its selected action.
             self.agents.shuffle_do("step")
