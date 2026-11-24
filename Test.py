@@ -22,8 +22,16 @@ TESTS = [
     {"name": "max plus 2 agents", "method": "maxplus", "numAgents": 2,
      "width": 30, "height": 20,
      "maxSteps": 500, "repetitions": 100},
+    
+    {"name": "max plus 3 agents", "method": "maxplus", "numAgents": 3,
+     "width": 30, "height": 20,
+     "maxSteps": 500, "repetitions": 100},
 
     {"name": "max plus 4 agents", "method": "maxplus", "numAgents": 4,
+     "width": 30, "height": 20,
+     "maxSteps": 500, "repetitions": 100},
+
+    {"name": "max plus 5 agents", "method": "maxplus", "numAgents": 5,
      "width": 30, "height": 20,
      "maxSteps": 500, "repetitions": 100},
 
@@ -44,7 +52,15 @@ TESTS = [
      "width": 30, "height": 20,
      "maxSteps": 500, "repetitions": 100},
 
+    {"name": "random 3 agents", "method": "random", "numAgents": 3,
+     "width": 30, "height": 20,
+     "maxSteps": 500, "repetitions": 100},
+
     {"name": "random 4 agents", "method": "random", "numAgents": 4,
+     "width": 30, "height": 20,
+     "maxSteps": 500, "repetitions": 100},
+
+    {"name": "random 5 agents", "method": "random", "numAgents": 5,
      "width": 30, "height": 20,
      "maxSteps": 500, "repetitions": 100},
 
