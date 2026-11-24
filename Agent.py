@@ -1,33 +1,35 @@
 """
-Implements coordinated and random cleaning robot agents.
+Cleaning robot agents: coordinated (Max-Plus) robots and random robots.
 Authors: Adriana Sandoval Santos - A01667445
          Marbella Barba De los Santos - A01660946
          Javier Padilla Marcial - A01660945
          Camila Quintanilla Cabrera - A01662397
          Alani Daniel Garcia Maya - A01277308
-Date: 2026-11-06
+Date: 2026-11-21
 """
 
 import mesa
 
+# The eight Moore-neighborhood moves used by the random robots.
 DIRECTIONS = [
     (-1, -1), (-1, 0), (-1, 1),
-    (0, -1),            (0, 1),
-    (1, -1),  (1, 0),   (1, 1)
+    (0, -1), (0, 1),
+    (1, -1), (1, 0), (1, 1)
 ]
 
+
 class RobotAgent(mesa.Agent):
-    # Initializes the coordinated robot and its counters.
-    # Parameters: 
-    #   model: Simulation model containing the robot.
+    # Initializes the robot's individual counters.
+    # Parameters: model: Simulation model containing this robot.
     # Returns: None.
     def __init__(self, model):
         super().__init__(model)
         self.movements = 0
         self.cellsCleaned = 0
         self.actions = 0
-        
-    # Executes the action selected by the coordination algorithm.
+
+    # Executes the action chosen for this robot by Max-Plus.
+    # Moves to the selected destination and cleans it if it is dirty.
     # Parameters: None.
     # Returns: None.
     def step(self):
@@ -45,7 +47,7 @@ class RobotAgent(mesa.Agent):
         if self.pos in self.model.dirtyCells:
             self.model.dirtyCells.remove(self.pos)
             self.cellsCleaned += 1
-            
+
 
 class RandomRobotAgent(mesa.Agent):
     # Initializes the robot's individual counters.
@@ -57,12 +59,10 @@ class RandomRobotAgent(mesa.Agent):
         self.cellsCleaned = 0
         self.actions = 0
 
-
-    # Cleans the current cell or attempts a random movement.
+    # Cleans the current cell or attempts one random movement.
     # Parameters: None.
     # Returns: None.
     def step(self):
-
         self.actions += 1
         currentPos = self.pos
 

@@ -17,15 +17,13 @@ ROOM_WIDTH = 30
 ROOM_HEIGHT = 20
 MAX_STEPS = 500
 NUM_AGENTS = 4
-N_DIRTY = 100
-AGENT_TYPE = "maxplus"
+AGENT_TYPE = "maxplus"  # "maxplus" or "random"
+START_AT_ORIGIN = False  # True: all robots start at [1,1]
 STEP_DELAY = 0.15
 
 
-# Draws dirty cells and robot locations on the grid.
-# Parameters: 
-#   axes: Matplotlib axes used for visualization.
-#   model: Simulation model containing the current state.
+# Draws the current dirty cells and robot locations on the plot.
+# Parameters: axes: Matplotlib axes; model: Current simulation model.
 # Returns: None.
 def drawRoom(axes, model):
     axes.clear()
@@ -81,7 +79,6 @@ def drawRoom(axes, model):
         f"Moves: {model.totalMoves}"
     )
 
-
 # Starts the interactive visualization and runs the simulation.
 # Parameters: None.
 # Returns: None.
@@ -91,8 +88,8 @@ def main():
         numAgents=NUM_AGENTS,
         width=ROOM_WIDTH,
         height=ROOM_HEIGHT,
-        nDirty=N_DIRTY,
-        agentType=AGENT_TYPE
+        agentType=AGENT_TYPE,
+        startAtOrigin=START_AT_ORIGIN
     )
 
     figure, axes = plt.subplots(figsize=(12, 7))
@@ -133,6 +130,4 @@ def main():
         drawRoom(axes, model)
         plt.show()
 
-
-if __name__ == "__main__":
-    main()
+main()

@@ -15,39 +15,39 @@ from Coordination import buildCoordinationGraph, maxPlus
 
 
 class CleaningModel(mesa.Model):
-    # Initializes the grid, dirty cells, and cleaning robots.
-    # Parameters: 
-    #   numAgents: Number of robots in the simulation.
-    #   maxSteps: Maximum number of simulation steps.
-    #   width: Number of grid columns.
-    #   height: Number of grid rows.
-    #   nDirty: Number of initially dirty cells.
-    #   agentType: Coordination method ("maxplus" or "random").
-    #   seed: Optional random seed for reproducibility.
+    # Creates a room, dirty cells, and robots for one simulation.
+    # Parameters: numAgents: Number of robots.
+    # maxSteps: Maximum number of simulation steps.
+    # width: Number of columns; height: Number of rows.
+    # nDirty: Number of initially dirty cells.
+    # agentType: "maxplus" (coordinated robots) or "random" (M1 robots).
+    # startAtOrigin: If True, every robot starts at cell [1,1], i.e.
+    # (0, 0) in Mesa; otherwise each starts at a random clean cell.
+    # seed: Optional random seed for reproducibility.
     # Returns: None.
-    def __init__(self, numAgents=1, maxSteps=500,
-                 width=30, height=20, nDirty = 100, agentType= "maxplus", seed=None):
+    def __init__(self, numAgents=1, maxSteps=500, width=30, height=20,
+                 nDirty=100, agentType="maxplus", startAtOrigin=False,
+                 seed=None):
         super().__init__(seed=seed)
 
-        if numAgents not in [1, 2, 4, 8, 16]:
-            raise ValueError("Number of agents must be 1, 2, 4, 8, or 16")
-
-        if width != 30 or height != 20:
-            raise ValueError("Room size must be 20x30")
-
-        if maxSteps != 500:
-            raise ValueError("Maximum steps must be 500")
-
         if agentType not in ["maxplus", "random"]:
-            raise ValueError(
-                "Agent type must be 'maxplus' or 'random'"
-            )
+            raise ValueError('Agent type must be "maxplus" or "random"')
 
-        if nDirty < 1 or nDirty > width * height - numAgents:
-            raise ValueError(
-                "Number of dirty cells must allow clean starting positions"
-            )
-        
+        if numAgents < 1:
+            raise ValueError("There must be at least one robot")
+
+        if width < 1 or height < 1:
+            raise ValueError("Room width and height must be positive")
+
+        if maxSteps < 1:
+            raise ValueError("Maximum steps must be positive")
+
+        if not 0 <= nDirty <= width * height:
+            raise ValueError("Dirty cells must be between 0 and M x N")
+
+        if not startAtOrigin and nDirty + numAgents > width * height:
+            raise ValueError("Not enough clean cells for the robots")
+
         self.numAgents = numAgents
         self.maxSteps = maxSteps
         self.width = width
@@ -61,7 +61,7 @@ class CleaningModel(mesa.Model):
 
         self.grid = MultiGrid(width, height, torus=False)
 
-        # Creates a list of all positions in the grid.
+        # Randomly selects nDirty different dirty cells (100 by default).
         allCells = [
             (x, y)
             for x in range(width)
@@ -75,16 +75,19 @@ class CleaningModel(mesa.Model):
 
         self.initialDirtyCells = len(self.dirtyCells)
 
-        # Finds clean cells available for robot placement.
-        cleanCells = [
-            cell for cell in allCells
-            if cell not in self.dirtyCells
-        ]
+        if startAtOrigin:
+            # Every robot starts at cell [1,1].
+            startingPositions = [(0, 0)] * numAgents
+        else:
+            # Selects random starting positions from clean cells.
+            cleanCells = [
+                cell for cell in allCells
+                if cell not in self.dirtyCells
+            ]
 
-        # Assigns different random clean starting positions.
-        startingPositions = self.random.sample(
-            cleanCells, numAgents
-        )
+            startingPositions = self.random.sample(
+                cleanCells, numAgents
+            )
 
         # Creates the selected type of cleaning robots.
         agentClass = RobotAgent if agentType == "maxplus" else RandomRobotAgent
@@ -94,7 +97,13 @@ class CleaningModel(mesa.Model):
 
         self.running = True
 
-     # Executes one simulation step and checks termination.
+        # A room with no dirt is already clean at time 0.
+        if not self.dirtyCells:
+            self.completionTime = 0
+            self.running = False
+
+    # Computes the Max-Plus actions (coordinated robots only), activates
+    # every robot once, and updates simulation time.
     # Parameters: None.
     # Returns: None.
     def step(self):
@@ -122,6 +131,9 @@ class CleaningModel(mesa.Model):
     # Parameters: None.
     # Returns:  Percentage of initially dirty cells cleaned
     def cleanPercentage(self):
+        if self.initialDirtyCells == 0:
+            return 100.0
+
         cleanedCells = (
             self.initialDirtyCells - len(self.dirtyCells)
         )
@@ -157,3 +169,4 @@ class CleaningModel(mesa.Model):
             "totalMoves": self.totalMoves,
             "allClean": self.completionTime is not None
         }
+    

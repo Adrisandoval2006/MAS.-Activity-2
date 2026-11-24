@@ -1,15 +1,15 @@
 """
-Implements coordination graphs and Max-Plus message passing for autonomous cleaning robots.
+Coordination graph and Max-Plus message passing for the cleaning robots.
 Authors: Adriana Sandoval Santos - A01667445
          Marbella Barba De los Santos - A01660946
          Javier Padilla Marcial - A01660945
          Camila Quintanilla Cabrera - A01662397
          Alani Daniel Garcia Maya - A01277308
-Date: 2026-11-22
+Date: 2026-11-21
 """
 
-# Parameters selected for coordination.
-A = 10       # Reward for moving toward a dirty cell.
+# Parameters selected
+A = 10       # Utility for moving to a dirty cell
 B = 0        # Utility for staying
 C = -1       # Utility for moving to a clean cell
 D = 5        # Maximum distance between neighbors
@@ -17,10 +17,11 @@ U = 5        # Reward for choosing different destinations
 V = -10      # Penalty for choosing the same destination
 W = 0        # Payoff in other cases
 
-# Builds an undirected graph using Manhattan distance.
-# Parameters: 
-#   agents: List of robots in the simulation.
-# Returns: Dictionary mapping robot IDs to neighboring robot IDs.
+
+# Builds the coordination graph: two robots are neighbors when their
+# Manhattan distance is at most D.
+# Parameters: agents: List of robots.
+# Returns: Dictionary mapping each robot id to its list of neighbor ids.
 def buildCoordinationGraph(agents):
 
     graph = {}
@@ -42,45 +43,47 @@ def buildCoordinationGraph(agents):
                 
     return graph
 
-# Calculates Manhattan distance between two positions.
-# Parameters: 
-#   position: Initial coordinates.
-#   destCell: Destination coordinates.
-# Returns: Manhattan distance between both positions.
+
+# Calculates the Manhattan distance between two cells.
+# Parameters: position: First cell; destCell: Second cell.
+# Returns: Integer distance.
 def manhattan(position, destCell):
     return abs(position[0] - destCell[0]) + abs(position[1] - destCell[1])
 
-# Selects a valid neighboring cell toward the target.
-# Parameters: 
-#   agent: Robot selecting its movement.
-#   target: Dirty cell selected as the target.
-#   model: Simulation model containing the grid.
-# Returns: Position that reduces distance to the target.
-def goToward(agent, target, model):
-    if agent.pos == target:
-        return agent.pos
-    getMyNeighbors = model.grid.get_neighborhood(agent.pos, moore=False, include_center=False)
-    bestDistance = min(manhattan(cell, target) for cell in getMyNeighbors)
-    bestCells = [cell for cell in getMyNeighbors if manhattan(cell, target) == bestDistance]
-    return model.random.choice(sorted(bestCells))
 
-# Generates possible actions for one robot.
-# Parameters: 
-#   agent: Robot whose actions are evaluated.
-#   model: Simulation model containing dirty cells and grid.
-# Returns: List of actions with type and destination.
+# Chooses the 4-neighbor cell that gets the robot closest to a target.
+# Ties are broken at random among the closest cells.
+# Parameters: agent: Robot; target: Target cell; model: Simulation model.
+# Returns: The chosen neighbor cell.
+def goToward(agent, target, model):
+    getMyNeighbors = model.grid.get_neighborhood(
+        agent.pos, moore=False, include_center=False
+    )
+    bestDistance = min(manhattan(cell, target) for cell in getMyNeighbors)
+    best = [
+        cell for cell in getMyNeighbors
+        if manhattan(cell, target) == bestDistance
+    ]
+    return model.random.choice(sorted(best))
+
+
+# Lists the actions available to a robot in the current step.
+# Parameters: agent: Robot; model: Simulation model.
+# Returns: List of actions, each a dictionary with "type" and "destination".
 def getPossibleActions(agent, model):
     actions = []
-    getMyNeighbors = model.grid.get_neighborhood(agent.pos, moore=False, include_center = False)
-    
+    getMyNeighbors = model.grid.get_neighborhood(
+        agent.pos, moore=False, include_center=False
+    )
+
+    # Action a: one step toward the nearest dirty cell
     dirtyStep = None
 
     if model.dirtyCells:
         dirtyTarget = min(
             model.dirtyCells,
             key=lambda cell: (manhattan(agent.pos, cell), cell)
-            )
-        
+        )
         dirtyStep = goToward(agent, dirtyTarget, model)
         
         actions.append({
@@ -94,7 +97,7 @@ def getPossibleActions(agent, model):
         "destination": agent.pos
     })
 
-    # Action c: move to the nearest clean cell
+    # Action c: move to a random clean neighbor (different from action a)
     cleanCells = [
         cell for cell in getMyNeighbors
         if cell not in model.dirtyCells and cell != dirtyStep
@@ -108,10 +111,10 @@ def getPossibleActions(agent, model):
 
     return actions
 
-# Calculates the local utility of an action.
-# Parameters: 
-#   action: Action containing its type and destination.
-# Returns: Numeric utility assigned to the action.
+
+# Local utility q_i of one action.
+# Parameters: action: Action dictionary.
+# Returns: A, B or C depending on the action type.
 def calculateLocalUtility(action):
 
     if action["type"] == "a":
@@ -122,10 +125,11 @@ def calculateLocalUtility(action):
 
     return C
 
-# Calculates the payoff between two coordinated actions.
-# Parameters: action1: First robot's action.
-# action2: Second robot's action.
-# Returns: Reward, penalty, or neutral payoff.
+
+# Pairwise payoff f_ij between the actions of two neighbor robots.
+# Parameters: action1, action2: Actions of the two robots.
+# Returns: V if both move to the same cell, U if both move to different
+# cells, and W if at least one of them stays.
 def calculateNeighborPayoff(action1, action2):
 
     if action1["type"] != "b" and action2["type"] != "b":
@@ -136,20 +140,20 @@ def calculateNeighborPayoff(action1, action2):
 
     return W
 
-# Runs Max-Plus message passing to coordinate robot actions.
-# Parameters: 
-#   agents: Robots participating in coordination.
-#   graph: Dictionary representing the coordination graph.
-#   model: Simulation model containing the environment.
-#   iterations: Maximum number of message-passing iterations.
-#   tolerance: Minimum change required to continue iterations.
-# Returns: Dictionary mapping each robot ID to its selected action.
+
+# Runs Max-Plus message passing over the coordination graph.
+# Parameters: agents: List of robots; graph: Coordination graph;
+# model: Simulation model; iterations: Maximum number of iterations;
+# tolerance: Stops when no message changes more than this value.
+# Returns: Dictionary mapping each robot id to its selected action.
 def maxPlus(agents, graph, model, iterations=50, tolerance=0.0001):
     actions = {}
 
     for agent in agents:
         actions[agent.unique_id] = getPossibleActions(agent, model)
 
+    # messages[(i, j)][k]: message from robot i to robot j about
+    # robot j's k-th action. All messages start at zero.
     messages = {}
 
     for robot in graph:
@@ -158,11 +162,7 @@ def maxPlus(agents, graph, model, iterations=50, tolerance=0.0001):
                 0.0 for _ in actions[neighbor]
             ]
 
-    iteration = 0
-    converged = False
-
-    # Update all messages synchronously until convergence.
-    while iteration < iterations and not converged:
+    for _ in range(iterations):
         newMessages = {}
 
         for robot in graph:
@@ -175,16 +175,20 @@ def maxPlus(agents, graph, model, iterations=50, tolerance=0.0001):
                     for i, robotAction in enumerate(actions[robot]):
                         value = calculateLocalUtility(robotAction)
 
+                        # Adds what the other neighbors said about this action.
                         for otherRobot in graph[robot]:
                             if otherRobot != neighbor:
                                 value += messages[(otherRobot, robot)][i]
 
-                        value += calculateNeighborPayoff(robotAction,neighborAction)
+                        value += calculateNeighborPayoff(
+                            robotAction, neighborAction
+                        )
 
                         bestValue = max(bestValue, value)
 
                     message.append(bestValue)
 
+                # Normalizes the message so its maximum is 0.
                 maxValue = max(message)
 
                 normalizedMessage = [value - maxValue for value in message]
@@ -204,7 +208,10 @@ def maxPlus(agents, graph, model, iterations=50, tolerance=0.0001):
 
     selectedActions = {}
 
-    # Select each robot's action from its final local belief.
+    # Each robot picks the action with the best local utility plus
+    # incoming messages.
+    theSelectedActions = {}
+
     for robot in graph:
         bestValue = float("-inf")
         bestAction = actions[robot][0]
