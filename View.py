@@ -17,11 +17,15 @@ ROOM_WIDTH = 30
 ROOM_HEIGHT = 20
 MAX_STEPS = 500
 NUM_AGENTS = 4
+N_DIRTY = 100
+AGENT_TYPE = "maxplus"
 STEP_DELAY = 0.15
 
 
-# Draws the current dirty cells and robot locations on the plot.
-# Parameters: axes: Matplotlib axes; model: Current simulation model.
+# Draws dirty cells and robot locations on the grid.
+# Parameters: 
+#   axes: Matplotlib axes used for visualization.
+#   model: Simulation model containing the current state.
 # Returns: None.
 def drawRoom(axes, model):
     axes.clear()
@@ -70,8 +74,10 @@ def drawRoom(axes, model):
     axes.tick_params(which="minor", bottom=False, left=False)
 
     axes.set_title(
-        f"Step: {model.currentStep}/{model.maxSteps} | "
+        f"Method: {model.agentType.upper()} | "
+        f"Step: {model.currentStep}/{model.maxSteps}\n"
         f"Clean: {model.cleanPercentage():.1f}% | "
+        f"Remaining dirty: {len(model.dirtyCells)} | "
         f"Moves: {model.totalMoves}"
     )
 
@@ -84,7 +90,9 @@ def main():
         maxSteps=MAX_STEPS,
         numAgents=NUM_AGENTS,
         width=ROOM_WIDTH,
-        height=ROOM_HEIGHT
+        height=ROOM_HEIGHT,
+        nDirty=N_DIRTY,
+        agentType=AGENT_TYPE
     )
 
     figure, axes = plt.subplots(figsize=(12, 7))
@@ -102,7 +110,8 @@ def main():
     state = {"paused": False}
 
     # Toggles the animation when the button is clicked.
-    # Parameters: event: Matplotlib button event.
+    # Parameters: 
+    #   event: Matplotlib button event.
     # Returns: None.
     def togglePause(event):
         state["paused"] = not state["paused"]

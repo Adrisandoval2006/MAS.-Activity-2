@@ -1,5 +1,6 @@
 """
-Runs multiple cleaning robot experiments and saves results.
+Runs cleaning robot experiments using Max-Plus and Random agents.
+Saves simulation and individual robot statistics to CSV files.
 Authors: Adriana Sandoval Santos - A01667445
          Marbella Barba De los Santos - A01660946
          Javier Padilla Marcial - A01660945
@@ -12,48 +13,47 @@ import csv
 import time
 from Model import CleaningModel
 
+# Experimental configurations for both coordination methods.
 TESTS = [
-    # tests with maxplus
-    {"name": "max plus 1 agent", "method": "maxplus", "numAgents": 1,
-     "width": 30, "height": 20,
-     "maxSteps": 500, "repetitions": 100},
+    {"name": "max plus 1 agent", "method": "maxplus",
+     "numAgents": 1, "width": 30, "height": 20,
+     "nDirty": 100, "maxSteps": 500, "repetitions": 100},
 
-    {"name": "max plus 2 agents", "method": "maxplus", "numAgents": 2,
-     "width": 30, "height": 20,
-     "maxSteps": 500, "repetitions": 100},
+    {"name": "max plus 2 agents", "method": "maxplus",
+     "numAgents": 2, "width": 30, "height": 20,
+     "nDirty": 100, "maxSteps": 500, "repetitions": 100},
 
-    {"name": "max plus 4 agents", "method": "maxplus", "numAgents": 4,
-     "width": 30, "height": 20,
-     "maxSteps": 500, "repetitions": 100},
+    {"name": "max plus 4 agents", "method": "maxplus",
+     "numAgents": 4, "width": 30, "height": 20,
+     "nDirty": 100, "maxSteps": 500, "repetitions": 100},
 
-    {"name": "max plus 8 agents", "method": "maxplus", "numAgents": 8,
-     "width": 30, "height": 20,
-     "maxSteps": 500, "repetitions": 100},
+    {"name": "max plus 8 agents", "method": "maxplus",
+     "numAgents": 8, "width": 30, "height": 20,
+     "nDirty": 100, "maxSteps": 500, "repetitions": 100},
 
-    {"name": "max plus 16 agents", "method": "maxplus", "numAgents": 16,
-     "width": 30, "height": 20,
-     "maxSteps": 500, "repetitions": 100},
+    {"name": "max plus 16 agents", "method": "maxplus",
+     "numAgents": 16, "width": 30, "height": 20,
+     "nDirty": 100, "maxSteps": 500, "repetitions": 100},
 
-    # tests with random
-    {"name": "random 1 agent", "method": "random", "numAgents": 1,
-     "width": 30, "height": 20,
-     "maxSteps": 500, "repetitions": 100},
+    {"name": "random 1 agent", "method": "random",
+     "numAgents": 1, "width": 30, "height": 20,
+     "nDirty": 100, "maxSteps": 500, "repetitions": 100},
 
-    {"name": "random 2 agents", "method": "random", "numAgents": 2,
-     "width": 30, "height": 20,
-     "maxSteps": 500, "repetitions": 100},
+    {"name": "random 2 agents", "method": "random",
+     "numAgents": 2, "width": 30, "height": 20,
+     "nDirty": 100, "maxSteps": 500, "repetitions": 100},
 
-    {"name": "random 4 agents", "method": "random", "numAgents": 4,
-     "width": 30, "height": 20,
-     "maxSteps": 500, "repetitions": 100},
+    {"name": "random 4 agents", "method": "random",
+     "numAgents": 4, "width": 30, "height": 20,
+     "nDirty": 100, "maxSteps": 500, "repetitions": 100},
 
-    {"name": "random 8 agents", "method": "random", "numAgents": 8,
-     "width": 30, "height": 20,
-     "maxSteps": 500, "repetitions": 100},
+    {"name": "random 8 agents", "method": "random",
+     "numAgents": 8, "width": 30, "height": 20,
+     "nDirty": 100, "maxSteps": 500, "repetitions": 100},
 
-    {"name": "random 16 agents", "method": "random", "numAgents": 16,
-     "width": 30, "height": 20,
-     "maxSteps": 500, "repetitions": 100},
+    {"name": "random 16 agents", "method": "random",
+     "numAgents": 16, "width": 30, "height": 20,
+     "nDirty": 100, "maxSteps": 500, "repetitions": 100}
 ]
 
 OUTPUT_FILE = "test_results.csv"
@@ -61,7 +61,7 @@ AGENT_OUTPUT_FILE = "agent_results.csv"
 
 COLUMNS = [
     "test", "run", "seed", "numAgents", "width", "height",
-    "maxSteps", "executionTime", "completionTime",
+    "nDirty", "maxSteps", "executionTime", "completionTime",
     "cleanedPercentage", "remainingDirtyCells", "totalMoves",
     "allClean", "runTimeS"
 ]
@@ -71,9 +71,11 @@ AGENT_COLUMNS = [
     "activeSteps", "movements", "cellsCleaned"
 ]
 
-
 # Runs one simulation and collects its statistics.
-# Parameters: test: Configuration; run: Run number; seed: Random seed.
+# Parameters: 
+#   test: Experimental configuration dictionary.
+#   run: Repetition number.
+#   seed: Random seed used for reproducibility.
 # Returns: Simulation statistics and individual robot statistics.
 def runTest(test, run, seed):
     startTime = time.perf_counter()
@@ -83,9 +85,9 @@ def runTest(test, run, seed):
         numAgents=test["numAgents"],
         width=test["width"],
         height=test["height"],
-        nDirty=100,
+        nDirty=test["nDirty"],
         agentType=test["method"],
-        seed=seed,
+        seed=seed
     )
 
     while model.running:
@@ -100,6 +102,7 @@ def runTest(test, run, seed):
         "numAgents": test["numAgents"],
         "width": test["width"],
         "height": test["height"],
+        "nDirty": test["nDirty"]
     }
 
     row.update(model.getStats())
@@ -121,8 +124,9 @@ def runTest(test, run, seed):
     return row, agentRows
 
 
-# Runs all configurations and repetitions.
-# Parameters: tests: List of experimental configurations.
+# Runs all experimental configurations and repetitions.
+# Parameters: 
+#   tests: List of experimental configurations.
 # Returns: Simulation summaries and individual robot statistics.
 def runAll(tests):
     summaries = []
@@ -145,9 +149,11 @@ def runAll(tests):
     return summaries, agentRows
 
 
-# Saves simulation results into a CSV file.
-# Parameters: rows: Data to save; path: Output filename.
-# columns: CSV column names.
+# Saves experiment results into a CSV file.
+# Parameters: 
+#   rows: List of result dictionaries.
+#   path: Output filename.
+#   columns: Column names for the CSV file.
 # Returns: None.
 def saveCsv(rows, path, columns):
     with open(path, "w", newline="", encoding="utf-8-sig") as handle:
@@ -168,4 +174,5 @@ def main():
     saveCsv(agentRows, AGENT_OUTPUT_FILE, AGENT_COLUMNS)
 
 
-main()
+if __name__ == "__main__":
+    main()

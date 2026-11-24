@@ -1,5 +1,5 @@
 """
-Cleaning robot agent using coordination.
+Implements coordinated and random cleaning robot agents.
 Authors: Adriana Sandoval Santos - A01667445
          Marbella Barba De los Santos - A01660946
          Javier Padilla Marcial - A01660945
@@ -17,22 +17,30 @@ DIRECTIONS = [
 ]
 
 class RobotAgent(mesa.Agent):
+    # Initializes the coordinated robot and its counters.
+    # Parameters: 
+    #   model: Simulation model containing the robot.
+    # Returns: None.
     def __init__(self, model):
         super().__init__(model)
         self.movements = 0
         self.cellsCleaned = 0
         self.actions = 0
-
+        
+    # Executes the action selected by the coordination algorithm.
+    # Parameters: None.
+    # Returns: None.
     def step(self):
         self.actions += 1
 
         selectedAction = self.model.selectedActions[self.unique_id]
         nextPos = selectedAction["destination"]
 
-        if nextPos != self.pos:
-            self.model.grid.move_agent(self, nextPos)
-            self.movements += 1
-            self.model.totalMoves += 1
+        if not self.model.grid.out_of_bounds(nextPos):
+            if nextPos != self.pos:
+                self.model.grid.move_agent(self, nextPos)
+                self.movements += 1
+                self.model.totalMoves += 1
 
         if self.pos in self.model.dirtyCells:
             self.model.dirtyCells.remove(self.pos)
@@ -50,7 +58,9 @@ class RandomRobotAgent(mesa.Agent):
         self.actions = 0
 
 
-    #Cleans the current cell or attempts one random movement.
+    # Cleans the current cell or attempts a random movement.
+    # Parameters: None.
+    # Returns: None.
     def step(self):
 
         self.actions += 1
