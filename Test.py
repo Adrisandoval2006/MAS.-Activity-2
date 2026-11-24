@@ -13,43 +13,44 @@ import csv
 import time
 from Model import CleaningModel
 
-# Experimental configurations for both coordination methods.
 TESTS = [
-    {"name": "max plus 1 agent", "method": "maxplus",
-     "numAgents": 1, "width": 30, "height": 20,
-     "nDirty": 100, "maxSteps": 500, "repetitions": 100},
+    # tests with maxplus
+    {"name": "max plus 1 agent", "method": "maxplus", "numAgents": 1,
+     "width": 30, "height": 20,
+     "maxSteps": 500, "repetitions": 100},
 
-    {"name": "max plus 2 agents", "method": "maxplus",
-     "numAgents": 2, "width": 30, "height": 20,
-     "nDirty": 100, "maxSteps": 500, "repetitions": 100},
+    {"name": "max plus 2 agents", "method": "maxplus", "numAgents": 2,
+     "width": 30, "height": 20,
+     "maxSteps": 500, "repetitions": 100},
 
-    {"name": "max plus 4 agents", "method": "maxplus",
-     "numAgents": 4, "width": 30, "height": 20,
-     "nDirty": 100, "maxSteps": 500, "repetitions": 100},
+    {"name": "max plus 4 agents", "method": "maxplus", "numAgents": 4,
+     "width": 30, "height": 20,
+     "maxSteps": 500, "repetitions": 100},
 
-    {"name": "max plus 8 agents", "method": "maxplus",
-     "numAgents": 8, "width": 30, "height": 20,
-     "nDirty": 100, "maxSteps": 500, "repetitions": 100},
+    {"name": "max plus 8 agents", "method": "maxplus", "numAgents": 8,
+     "width": 30, "height": 20,
+     "maxSteps": 500, "repetitions": 100},
 
-    {"name": "max plus 16 agents", "method": "maxplus",
-     "numAgents": 16, "width": 30, "height": 20,
-     "nDirty": 100, "maxSteps": 500, "repetitions": 100},
+    {"name": "max plus 16 agents", "method": "maxplus", "numAgents": 16,
+     "width": 30, "height": 20,
+     "maxSteps": 500, "repetitions": 100},
 
-    {"name": "random 1 agent", "method": "random",
-     "numAgents": 1, "width": 30, "height": 20,
-     "nDirty": 100, "maxSteps": 500, "repetitions": 100},
+    # tests with random
+    {"name": "random 1 agent", "method": "random", "numAgents": 1,
+     "width": 30, "height": 20,
+     "maxSteps": 500, "repetitions": 100},
 
-    {"name": "random 2 agents", "method": "random",
-     "numAgents": 2, "width": 30, "height": 20,
-     "nDirty": 100, "maxSteps": 500, "repetitions": 100},
+    {"name": "random 2 agents", "method": "random", "numAgents": 2,
+     "width": 30, "height": 20,
+     "maxSteps": 500, "repetitions": 100},
 
-    {"name": "random 4 agents", "method": "random",
-     "numAgents": 4, "width": 30, "height": 20,
-     "nDirty": 100, "maxSteps": 500, "repetitions": 100},
+    {"name": "random 4 agents", "method": "random", "numAgents": 4,
+     "width": 30, "height": 20,
+     "maxSteps": 500, "repetitions": 100},
 
-    {"name": "random 8 agents", "method": "random",
-     "numAgents": 8, "width": 30, "height": 20,
-     "nDirty": 100, "maxSteps": 500, "repetitions": 100},
+    {"name": "random 8 agents", "method": "random", "numAgents": 8,
+     "width": 30, "height": 20,
+     "maxSteps": 500, "repetitions": 100},
 
     {"name": "random 16 agents", "method": "random", "numAgents": 16,
      "width": 30, "height": 20,
@@ -63,14 +64,14 @@ OUTPUT_FILE = "test_results.csv"
 
 COLUMNS = [
     "test", "run", "seed", "numAgents", "width", "height",
-    "nDirty", "maxSteps", "executionTime", "completionTime",
+    "maxSteps", "executionTime", "completionTime",
     "cleanedPercentage", "remainingDirtyCells", "totalMoves",
     "allClean", "runTimeS"
 ]
 
 # Runs one simulation and collects its statistics.
 # Parameters: test: Configuration; run: Run number; seed: Random seed.
-# Returns: Simulation statistics and individual robot statistics.
+# Returns: Dictionary with the statistics of the simulation.
 def runTest(test, run, seed):
     startTime = time.perf_counter()
 
@@ -79,7 +80,7 @@ def runTest(test, run, seed):
         numAgents=test["numAgents"],
         width=test["width"],
         height=test["height"],
-        nDirty=test["nDirty"],
+        nDirty=100,
         agentType=test["method"],
         startAtOrigin=test.get("startAtOrigin", False),
         seed=seed,
@@ -97,7 +98,6 @@ def runTest(test, run, seed):
         "numAgents": test["numAgents"],
         "width": test["width"],
         "height": test["height"],
-        "nDirty": test["nDirty"]
     }
 
     row.update(model.getStats())
@@ -126,11 +126,9 @@ def runAll(tests):
 
     return summaries
 
-# Saves experiment results into a CSV file.
-# Parameters: 
-#   rows: List of result dictionaries.
-#   path: Output filename.
-#   columns: Column names for the CSV file.
+# Saves simulation results into a CSV file.
+# Parameters: rows: Data to save; path: Output filename.
+# columns: CSV column names.
 # Returns: None.
 def saveCsv(rows, path, columns):
     with open(path, "w", newline="", encoding="utf-8-sig") as handle:
@@ -147,6 +145,5 @@ def main():
     summaries = runAll(TESTS)
 
     saveCsv(summaries, OUTPUT_FILE, COLUMNS)
-
 
 main()

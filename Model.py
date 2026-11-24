@@ -68,7 +68,6 @@ class CleaningModel(mesa.Model):
             for y in range(height)
         ]
 
-        # Selects different dirty cells without replacement.
         self.dirtyCells = set(
             self.random.sample(allCells, nDirty)
         )
@@ -89,10 +88,10 @@ class CleaningModel(mesa.Model):
                 cleanCells, numAgents
             )
 
-        # Creates the selected type of cleaning robots.
-        agentClass = RobotAgent if agentType == "maxplus" else RandomRobotAgent
+        # Creates robots at their selected starting positions.
+        agentC = RobotAgent if agentType == "maxplus" else RandomRobotAgent
         for position in startingPositions:
-            agent = agentClass(self)
+            agent = agentC(self)
             self.grid.place_agent(agent, position)
 
         self.running = True
@@ -109,13 +108,12 @@ class CleaningModel(mesa.Model):
     def step(self):
         if self.running:
             if self.agentType == "maxplus":
-                # Builds the graph using current robot positions.
+                # Creates the coordination graph.
                 graph = buildCoordinationGraph(list(self.agents))
-
-                # Computes coordinated actions before movement.
+                # Calculates the best action for each robot.
                 self.selectedActions = maxPlus(list(self.agents), graph, self)
 
-            # Activates every robot once in random order.
+            # Activates every robot using its selected action.
             self.agents.shuffle_do("step")
 
             self.currentStep += 1
@@ -127,9 +125,9 @@ class CleaningModel(mesa.Model):
             elif self.currentStep >= self.maxSteps:
                 self.running = False
 
-    # Calculates the percentage of initially dirty cells.
+    # Calculates the percentage of initially dirty cells cleaned.
     # Parameters: None.
-    # Returns:  Percentage of initially dirty cells cleaned
+    # Returns: Float representing the cleaned percentage.
     def cleanPercentage(self):
         if self.initialDirtyCells == 0:
             return 100.0
@@ -140,9 +138,9 @@ class CleaningModel(mesa.Model):
 
         return 100 * cleanedCells / self.initialDirtyCells
 
-    # Collects the statistics of each cleaning robot.
+    # Returns the per-robot counters for the current simulation.
     # Parameters: None.
-    # Returns: List of dictionaries containing robot statistics.
+    # Returns: List of dictionaries with each robot's statistics.
     def getAgentStats(self):
         agentStats = []
 
@@ -156,9 +154,9 @@ class CleaningModel(mesa.Model):
 
         return agentStats
 
-    # Collects the overall statistics of the simulation.
+    # Returns overall statistics for the current simulation.
     # Parameters: None.
-    # Returns: Dictionary containing simulation measurements.
+    # Returns: Dictionary of simulation-level measurements.
     def getStats(self):
         return {
             "executionTime": self.currentStep,
@@ -169,4 +167,3 @@ class CleaningModel(mesa.Model):
             "totalMoves": self.totalMoves,
             "allClean": self.completionTime is not None
         }
-    

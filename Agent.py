@@ -38,11 +38,10 @@ class RobotAgent(mesa.Agent):
         selectedAction = self.model.selectedActions[self.unique_id]
         nextPos = selectedAction["destination"]
 
-        if not self.model.grid.out_of_bounds(nextPos):
-            if nextPos != self.pos:
-                self.model.grid.move_agent(self, nextPos)
-                self.movements += 1
-                self.model.totalMoves += 1
+        if nextPos != self.pos:
+            self.model.grid.move_agent(self, nextPos)
+            self.movements += 1
+            self.model.totalMoves += 1
 
         if self.pos in self.model.dirtyCells:
             self.model.dirtyCells.remove(self.pos)

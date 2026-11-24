@@ -35,12 +35,14 @@ def buildCoordinationGraph(agents):
             robot1 = agents[i]
             robot2 = agents[j]
 
-            distance = manhattan(robot1.pos, robot2.pos)
+            x1, y1 = robot1.pos
+            x2, y2 = robot2.pos
+
+            distance = abs(x1 - x2) + abs(y1 - y2)
 
             if distance <= D:
                 graph[robot1.unique_id].append(robot2.unique_id)
                 graph[robot2.unique_id].append(robot1.unique_id)
-                
     return graph
 
 
@@ -78,14 +80,12 @@ def getPossibleActions(agent, model):
 
     # Action a: one step toward the nearest dirty cell
     dirtyStep = None
-
     if model.dirtyCells:
         dirtyTarget = min(
             model.dirtyCells,
             key=lambda cell: (manhattan(agent.pos, cell), cell)
         )
         dirtyStep = goToward(agent, dirtyTarget, model)
-        
         actions.append({
             "type": "a",
             "destination": dirtyStep
@@ -133,6 +133,7 @@ def calculateLocalUtility(action):
 def calculateNeighborPayoff(action1, action2):
 
     if action1["type"] != "b" and action2["type"] != "b":
+
         if action1["destination"] == action2["destination"]:
             return V
 
@@ -158,6 +159,7 @@ def maxPlus(agents, graph, model, iterations=50, tolerance=0.0001):
 
     for robot in graph:
         for neighbor in graph[robot]:
+
             messages[(robot, neighbor)] = [
                 0.0 for _ in actions[neighbor]
             ]
@@ -171,7 +173,6 @@ def maxPlus(agents, graph, model, iterations=50, tolerance=0.0001):
 
                 for neighborAction in actions[neighbor]:
                     bestValue = float("-inf")
-
                     for i, robotAction in enumerate(actions[robot]):
                         value = calculateLocalUtility(robotAction)
 
@@ -190,7 +191,6 @@ def maxPlus(agents, graph, model, iterations=50, tolerance=0.0001):
 
                 # Normalizes the message so its maximum is 0.
                 maxValue = max(message)
-
                 normalizedMessage = [value - maxValue for value in message]
 
                 newMessages[(robot, neighbor)] = normalizedMessage
@@ -200,13 +200,13 @@ def maxPlus(agents, graph, model, iterations=50, tolerance=0.0001):
         for key in messages:
             for oldValue, newValue in zip(messages[key], newMessages[key]):
                 difference = abs(newValue - oldValue)
+
                 maxDifference = max(maxDifference, difference)
 
         messages = newMessages
-        converged = maxDifference < tolerance
-        iteration += 1
 
-    selectedActions = {}
+        if maxDifference < tolerance:
+            break
 
     # Each robot picks the action with the best local utility plus
     # incoming messages.
@@ -226,6 +226,7 @@ def maxPlus(agents, graph, model, iterations=50, tolerance=0.0001):
                 bestValue = value
                 bestAction = action
 
-        selectedActions[robot] = bestAction
+        theSelectedActions[robot] = bestAction
 
-    return selectedActions
+    return theSelectedActions
+
