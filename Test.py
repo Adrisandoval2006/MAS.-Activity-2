@@ -1,5 +1,6 @@
 """
-Runs multiple cleaning robot experiments and saves results.
+Runs 100 simulations per configuration and saves them in one log
+(test_results.csv, one row per simulation).
 Authors: Adriana Sandoval Santos - A01667445
          Marbella Barba De los Santos - A01660946
          Javier Padilla Marcial - A01660945
@@ -56,8 +57,10 @@ TESTS = [
      "maxSteps": 500, "repetitions": 100},
 ]
 
+# Optional keys per test: "seedStart" (first seed, default 0) and
+# "startAtOrigin" (True: all robots start at [1,1]; default False).
+
 OUTPUT_FILE = "test_results.csv"
-AGENT_OUTPUT_FILE = "agent_results.csv"
 
 COLUMNS = [
     "test", "run", "seed", "numAgents", "width", "height",
@@ -66,15 +69,9 @@ COLUMNS = [
     "allClean", "runTimeS"
 ]
 
-AGENT_COLUMNS = [
-    "test", "run", "seed", "numAgents", "agentId",
-    "activeSteps", "movements", "cellsCleaned"
-]
-
-
 # Runs one simulation and collects its statistics.
 # Parameters: test: Configuration; run: Run number; seed: Random seed.
-# Returns: Simulation statistics and individual robot statistics.
+# Returns: Dictionary with the statistics of the simulation.
 def runTest(test, run, seed):
     startTime = time.perf_counter()
 
@@ -85,6 +82,7 @@ def runTest(test, run, seed):
         height=test["height"],
         nDirty=100,
         agentType=test["method"],
+        startAtOrigin=test.get("startAtOrigin", False),
         seed=seed,
     )
 
@@ -105,45 +103,28 @@ def runTest(test, run, seed):
     row.update(model.getStats())
     row["runTimeS"] = round(runTime, 6)
 
-    agentRows = []
-
-    for agentStats in model.getAgentStats():
-        agentRow = {
-            "test": test["name"],
-            "run": run,
-            "seed": seed,
-            "numAgents": test["numAgents"],
-        }
-
-        agentRow.update(agentStats)
-        agentRows.append(agentRow)
-
-    return row, agentRows
-
+    return row
 
 # Runs all configurations and repetitions.
 # Parameters: tests: List of experimental configurations.
-# Returns: Simulation summaries and individual robot statistics.
+# Returns: List with one statistics row per simulation.
 def runAll(tests):
     summaries = []
-    agentRows = []
 
     for test in tests:
         for run in range(1, test["repetitions"] + 1):
             seed = test.get("seedStart", 0) + run - 1
 
-            row, robots = runTest(test, run, seed)
+            row = runTest(test, run, seed)
 
             summaries.append(row)
-            agentRows.extend(robots)
 
         print(
             f"Test '{test['name']}' completed "
             f"({test['repetitions']} runs)"
         )
 
-    return summaries, agentRows
-
+    return summaries
 
 # Saves simulation results into a CSV file.
 # Parameters: rows: Data to save; path: Output filename.
@@ -157,15 +138,12 @@ def saveCsv(rows, path, columns):
 
     print("CSV saved on", path)
 
-
 # Runs the experiments and saves their results.
 # Parameters: None.
 # Returns: None.
 def main():
-    summaries, agentRows = runAll(TESTS)
+    summaries = runAll(TESTS)
 
     saveCsv(summaries, OUTPUT_FILE, COLUMNS)
-    saveCsv(agentRows, AGENT_OUTPUT_FILE, AGENT_COLUMNS)
-
 
 main()
