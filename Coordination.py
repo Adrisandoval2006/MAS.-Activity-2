@@ -165,7 +165,11 @@ def maxPlus(agents, graph, model, iterations=50, tolerance=0.0001):
                 0.0 for _ in actions[neighbor]
             ]
 
-    for _ in range(iterations):
+    # Initializes the iteration and convergence variables.
+    iteration = 0
+    converged = False
+
+    while iteration < iterations and not converged:
         newMessages = {}
 
         for robot in graph:
@@ -206,8 +210,8 @@ def maxPlus(agents, graph, model, iterations=50, tolerance=0.0001):
 
         messages = newMessages
 
-        if maxDifference < tolerance:
-            break
+        converged = maxDifference < tolerance
+        iteration += 1
 
     # Each robot picks the action with the best local utility plus
     # incoming messages.
@@ -230,3 +234,4 @@ def maxPlus(agents, graph, model, iterations=50, tolerance=0.0001):
         theSelectedActions[robot] = bestAction
 
     return theSelectedActions
+
