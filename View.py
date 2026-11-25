@@ -20,6 +20,7 @@ NUM_AGENTS = 4
 AGENT_TYPE = "maxplus"  # "maxplus" or "random"
 START_AT_ORIGIN = False  # True: all robots start at [1,1]
 STEP_DELAY = 0.15
+
 # Draws the current dirty cells and robot locations on the plot.
 # Parameters: axes: Matplotlib axes; model: Current simulation model.
 # Returns: None.
@@ -43,15 +44,37 @@ def drawRoom(axes, model):
         vmax=1
     )
 
+    # Counts the number of robots occupying each cell.
+    robotPositions = {}
+
     for agent in model.agents:
+        position = agent.pos
+        robotPositions[position] = robotPositions.get(position, 0) + 1
+
+    # Draws each occupied cell and displays overlapping robots.
+    for position, count in robotPositions.items():
+        x, y = position
+
         axes.plot(
-            agent.pos[0],
-            agent.pos[1],
+            x,
+            y,
             "o",
             color="#2563EB",
-            markersize=8,
+            markersize=12 if count > 1 else 8,
             markeredgecolor="white"
         )
+
+        if count > 1:
+            axes.text(
+                x,
+                y,
+                str(count),
+                color="white",
+                fontsize=7,
+                fontweight="bold",
+                ha="center",
+                va="center"
+            )
 
     axes.set_xticks(range(model.width))
     axes.set_yticks(range(model.height))
@@ -71,7 +94,9 @@ def drawRoom(axes, model):
 
     axes.set_title(
         f"Step: {model.currentStep}/{model.maxSteps} | "
+        f"Robots: {len(model.agents)} | "
         f"Clean: {model.cleanPercentage():.1f}% | "
+        f"Remaining dirty: {len(model.dirtyCells)} | "
         f"Moves: {model.totalMoves}"
     )
 
