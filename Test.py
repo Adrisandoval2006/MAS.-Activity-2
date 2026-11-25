@@ -13,48 +13,34 @@ import csv
 import time
 from Model import CleaningModel
 
+AGENT_COUNTS = [1, 2, 4, 8, 16]
+
+# The two methods compared: coordinated Max-Plus robots and the random
+# robots of Activity M1.
+METHODS = [
+    {"name": "max plus", "label": "Max-Plus", "method": "maxplus"},
+    {"name": "random", "label": "Random (M1)", "method": "random"},
+]
+
+# Creates the configuration of one test.
+# Parameters: method: One entry of METHODS; numAgents: Number of robots.
+# Returns: Dictionary with the test configuration.
+def makeTest(method, numAgents):
+    agentWord = "agent" if numAgents == 1 else "agents"
+
+    return {
+        "name": f"{method['name']} {numAgents} {agentWord}",
+        "label": method["label"],
+        "method": method["method"],
+        "numAgents": numAgents,
+        "width": 30, "height": 20,
+        "maxSteps": 500, "repetitions": 100,
+    }
+
 TESTS = [
-    # tests with maxplus
-    {"name": "max plus 1 agent", "method": "maxplus", "numAgents": 1,
-     "width": 30, "height": 20,
-     "maxSteps": 500, "repetitions": 100},
-
-    {"name": "max plus 2 agents", "method": "maxplus", "numAgents": 2,
-     "width": 30, "height": 20,
-     "maxSteps": 500, "repetitions": 100},
-
-    {"name": "max plus 4 agents", "method": "maxplus", "numAgents": 4,
-     "width": 30, "height": 20,
-     "maxSteps": 500, "repetitions": 100},
-
-    {"name": "max plus 8 agents", "method": "maxplus", "numAgents": 8,
-     "width": 30, "height": 20,
-     "maxSteps": 500, "repetitions": 100},
-
-    {"name": "max plus 16 agents", "method": "maxplus", "numAgents": 16,
-     "width": 30, "height": 20,
-     "maxSteps": 500, "repetitions": 100},
-
-    # tests with random
-    {"name": "random 1 agent", "method": "random", "numAgents": 1,
-     "width": 30, "height": 20,
-     "maxSteps": 500, "repetitions": 100},
-
-    {"name": "random 2 agents", "method": "random", "numAgents": 2,
-     "width": 30, "height": 20,
-     "maxSteps": 500, "repetitions": 100},
-
-    {"name": "random 4 agents", "method": "random", "numAgents": 4,
-     "width": 30, "height": 20,
-     "maxSteps": 500, "repetitions": 100},
-
-    {"name": "random 8 agents", "method": "random", "numAgents": 8,
-     "width": 30, "height": 20,
-     "maxSteps": 500, "repetitions": 100},
-
-    {"name": "random 16 agents", "method": "random", "numAgents": 16,
-     "width": 30, "height": 20,
-     "maxSteps": 500, "repetitions": 100},
+    makeTest(method, numAgents)
+    for method in METHODS
+    for numAgents in AGENT_COUNTS
 ]
 
 # Optional keys per test: "seedStart" (first seed, default 0) and
@@ -63,7 +49,7 @@ TESTS = [
 OUTPUT_FILE = "test_results.csv"
 
 COLUMNS = [
-    "test", "run", "seed", "numAgents", "width", "height",
+    "test", "method", "run", "seed", "numAgents", "width", "height",
     "maxSteps", "executionTime", "completionTime",
     "cleanedPercentage", "remainingDirtyCells", "totalMoves",
     "allClean", "runTimeS"
@@ -93,6 +79,7 @@ def runTest(test, run, seed):
 
     row = {
         "test": test["name"],
+        "method": test["label"],
         "run": run,
         "seed": seed,
         "numAgents": test["numAgents"],

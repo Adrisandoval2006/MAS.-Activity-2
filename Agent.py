@@ -17,7 +17,6 @@ DIRECTIONS = [
     (1, -1), (1, 0), (1, 1)
 ]
 
-
 class RobotAgent(mesa.Agent):
     # Initializes the robot's individual counters.
     # Parameters: model: Simulation model containing this robot.
@@ -46,7 +45,6 @@ class RobotAgent(mesa.Agent):
         if self.pos in self.model.dirtyCells:
             self.model.dirtyCells.remove(self.pos)
             self.cellsCleaned += 1
-
 
 class RandomRobotAgent(mesa.Agent):
     # Initializes the robot's individual counters.
