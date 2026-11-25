@@ -146,7 +146,8 @@ def goToward(agent, target, model):
 
 # Lists the actions available to a robot in the current step.
 # A robot standing on a dirty cell spends this step cleaning it, so its
-# only action is to stay.
+# only action is to stay. (this only happens if it starts there, 
+# since robots clean a cell as soon as they arrive)
 # Parameters: agent: Robot; model: Simulation model.
 # Returns: List of actions, each a dictionary with "type", "destination",
 # "target" (dirty cell the robot is heading to, or None) and
