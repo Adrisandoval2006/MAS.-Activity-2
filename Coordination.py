@@ -43,6 +43,7 @@ def buildCoordinationGraph(agents):
             if distance <= D:
                 graph[robot1.unique_id].append(robot2.unique_id)
                 graph[robot2.unique_id].append(robot1.unique_id)
+
     return graph
 
 
@@ -164,7 +165,11 @@ def maxPlus(agents, graph, model, iterations=50, tolerance=0.0001):
                 0.0 for _ in actions[neighbor]
             ]
 
-    for _ in range(iterations):
+    # Initializes the iteration and convergence variables.
+    iteration = 0
+    converged = False
+
+    while iteration < iterations and not converged:
         newMessages = {}
 
         for robot in graph:
@@ -205,8 +210,8 @@ def maxPlus(agents, graph, model, iterations=50, tolerance=0.0001):
 
         messages = newMessages
 
-        if maxDifference < tolerance:
-            break
+        converged = maxDifference < tolerance
+        iteration += 1
 
     # Each robot picks the action with the best local utility plus
     # incoming messages.
