@@ -167,4 +167,3 @@ class CleaningModel(mesa.Model):
             "totalMoves": self.totalMoves,
             "allClean": self.completionTime is not None
         }
-    
