@@ -130,7 +130,7 @@ def saveCsv(rows, path, columns):
 # Returns: None.
 def main():
     summaries = runAll(TESTS)
-
     saveCsv(summaries, OUTPUT_FILE, COLUMNS)
 
-main()
+if __name__ == "__main__":
+    main()

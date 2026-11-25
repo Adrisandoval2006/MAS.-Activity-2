@@ -326,7 +326,6 @@ def maxPlus(agents, graph, model, iterations=50, tolerance=0.0001):
 
         messages = newMessages
 
-        # Stops when no message changed more than the tolerance.
         converged = maxDifference < tolerance
         iteration += 1
 
@@ -351,3 +350,4 @@ def maxPlus(agents, graph, model, iterations=50, tolerance=0.0001):
         theSelectedActions[robot] = bestAction
 
     return theSelectedActions
+
